@@ -1,13 +1,25 @@
 from fastapi import FastAPI, UploadFile, File
 import pandas as pd
 from io import BytesIO
+import yaml
+import os
 
 import requests
 
-API_URL = "http://192.168.1.80/openmrs/admin/concepts/conceptDrug.form"
+# Load configuration
+config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
+with open(config_path, 'r') as f:
+    config = yaml.safe_load(f)
+
+baseurl = config['baseurl']
+CSRF_TOKEN = config['auth']['csrf_token']
+SESSION_ID = config['auth']['session_id']
+AUTH_USERNAME = config['auth']['username']
+AUTH_PASSWORD = config['auth']['password']
+REQUEST_TIMEOUT = config['request']['timeout']
+
 
 app = FastAPI()
-
 
 @app.post("/upload-drugs")
 async def upload_drugs(file: UploadFile = File(...)):
@@ -25,19 +37,19 @@ async def upload_drugs(file: UploadFile = File(...)):
         row_number = index + 2  # +2 because Excel has header row
         # print(row)
 
-        url = "http://192.168.1.8/openmrs/admin/concepts/conceptDrug.form"
+        url = f"{baseurl}{config['api']['concepts_drug']}"
 
         headers = {
             "Content-Type": "application/x-www-form-urlencoded"
         }
 
         cookies = {
-            "JSESSIONID": "E4ACCD8BAB6412575FC73E28468174D6",
-            "OWASP-CSRFTOKEN": "6ZL5-365R-KHT5-OGQQ-N5S3-W98J-2Z90-3OUF"
+            "JSESSIONID": SESSION_ID,
+            "OWASP-CSRFTOKEN": CSRF_TOKEN
         }
 
         data = {
-            "OWASP-CSRFTOKEN": "6ZL5-365R-KHT5-OGQQ-N5S3-W98J-2Z90-3OUF",
+            "OWASP-CSRFTOKEN": CSRF_TOKEN,
             "name": row["536.1"],
             "concept": "4256",
             "concept_other": "",
@@ -56,7 +68,7 @@ async def upload_drugs(file: UploadFile = File(...)):
                 headers=headers,
                 cookies=cookies,
                 data=data,
-                timeout=30
+                timeout=REQUEST_TIMEOUT
             )
 
             if response.ok:
@@ -122,10 +134,7 @@ async def upload_concent(file: UploadFile = File(...)):
         print(f"Row {index + 1}:")
         print(row.to_dict())
 
-        url = "http://192.168.1.8/openmrs/ws/rest/v1/concept"
-
-        username = "admin"
-        password = "Admin123"
+        url = f"{baseurl}{config['api']['concept']}"
 
 
         data = {
@@ -148,9 +157,9 @@ async def upload_concent(file: UploadFile = File(...)):
                 headers={
                     "Content-Type": "application/json"
                 },
-                auth=(username, password),
+                auth=(AUTH_USERNAME, AUTH_PASSWORD),
                 json=data,
-                timeout=30
+                timeout=REQUEST_TIMEOUT
             )
 
             if response.ok:
@@ -188,10 +197,7 @@ async def upload_new_drug(file: UploadFile = File(...)):
         print(f"Row {index + 1}:")
         print(row.to_dict())
 
-        url = "http://192.168.1.8/openmrs/ws/rest/v1/drug"
-
-        username = "admin"
-        password = "Admin123"
+        url = f"{baseurl}{config['api']['drug']}"
 
 
         data = {
@@ -211,9 +217,9 @@ async def upload_new_drug(file: UploadFile = File(...)):
                 headers={
                     "Content-Type": "application/json"
                 },
-                auth=(username, password),
+                auth=(AUTH_USERNAME, AUTH_PASSWORD),
                 json=data,
-                timeout=30
+                timeout=REQUEST_TIMEOUT
             )
 
             if response.ok:
@@ -235,3 +241,8 @@ async def upload_new_drug(file: UploadFile = File(...)):
         "filename": file.filename,
         "data": []
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

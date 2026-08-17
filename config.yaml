@@ -1,0 +1,20 @@
+# OpenMRS Configuration
+baseurl: "http://192.168.1.8"
+
+# API Endpoints
+api:
+  concepts_drug: "/openmrs/admin/concepts/conceptDrug.form"
+  concept: "/openmrs/ws/rest/v1/concept"
+  drug: "/openmrs/ws/rest/v1/drug"
+
+# Authentication
+auth:
+  username: "admin"
+  password: "Admin123"
+  csrf_token: "6ZL5-365R-KHT5-OGQQ-N5S3-W98J-2Z90-3OUF"
+  session_id: "E4ACCD8BAB6412575FC73E28468174D6"
+
+# Request Configuration
+request:
+  timeout: 30
+  content_type: "application/json"
